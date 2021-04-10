@@ -7,13 +7,15 @@ console.log("---------------EMPLOYEE TRACKER APP---------------");
 console.log("Please use this application to view and manage the departments, roles, and employees");
 
 //connection to MySQL
-var con = mysql.createConnection({
+const connection = mysql.createConnection({
     host: "localhost",
+    port: 3306,
     user: "root",
-    password: ""
+    password: "",
+    database: "employee_tracker"
   });
   
-  con.connect(function(err) {
+  connection.connect(function(err) {
     if (err) throw err;
-    console.log("Connected!");
+    console.log("Connected to employee_tracker database!");
   });
