@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/carlastjuste/employe-tracker#readme",
   "dependencies": {
-    "inquirer": "^8.0.0"
+    "console.table": "^0.10.0",
+    "inquirer": "^8.0.0",
+    "mysql": "github:mysqljs/mysql"
   }
 }
