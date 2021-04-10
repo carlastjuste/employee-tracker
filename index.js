@@ -45,26 +45,26 @@ connection.query = util.promisify(connection.query);
 
     switch (action) {
       case "View All Employees":
-          ViewAllEmployees();
+          viewAllEmployees();
           break;
       case "View All Departments":
-          ViewAllDepartments();
+          viewAllDepartments();
           break;
       case "View All Roles":
-            ViewAllRoles();
-            break;
+          viewAllRoles();
+          break;
       case "Add Employee":
-          AddEmployee();
+          addEmployee();
           break;
       case "Add Department":
-          AddDepartment();
+          addDepartment();
           break;
       case "Add Role":
-        AddRole();
-        break;
+          addRole();
+          break;
       case "Update Employee Role":
-            SearchEmployeeById("UpdateRole");
-            break;
+          updateEmployeeRole();
+          break;
       case "Quit":
           console.log("Exiting!")
           connection.end();
@@ -79,7 +79,7 @@ connection.query = util.promisify(connection.query);
   //------------------------------------------------------//
 
 //Function to view list of employees
-let ViewAllEmployees = async () => {
+let viewAllEmployees = async () => {
   try{
   let query = "SELECT emp.id , emp.first_name , emp.last_name , title , NAME as department , salary , CONCAT(m.first_name ,' ', m.last_name) as manager";
       query += " FROM employee emp LEFT JOIN  ROLE r ON emp.role_id = r.id";
@@ -102,7 +102,7 @@ let ViewAllEmployees = async () => {
 }
 
 // Function to view list of departments
-let ViewAllDepartments = async () => {
+let viewAllDepartments = async () => {
   try{
   const query = "SELECT id, name FROM department limit 500";
 
@@ -121,7 +121,7 @@ let ViewAllDepartments = async () => {
 }
 
 //Function to view list of roles
-let ViewAllRoles = async () => {
+let viewAllRoles = async () => {
   try{
   let query = "SELECT r.id, title, salary, NAME AS department";
       query += " FROM ROLE r INNER JOIN department d ON d.id = r.department_id";
@@ -140,7 +140,7 @@ let ViewAllRoles = async () => {
 }
 
 //function to add employee
- AddDepartment = async () => {
+let addDepartment = async () => {
   try {
     let department = await inquirer.prompt([{
         name: "name",
@@ -153,7 +153,7 @@ let ViewAllRoles = async () => {
     var result = await connection.query(query, {name: department.name});
 
     console.log("New Department added successfully");
-      ViewAllDepartments();
+      viewAllDepartments();
         }catch (err) {
           console.log(err);
           track();
@@ -162,7 +162,7 @@ let ViewAllRoles = async () => {
 
 
 //function to add role
-let AddRole = async () => {
+let addRole = async () => {
   try {
   var departmentList = await connection.query ("SELECT * FROM department");
 
@@ -199,8 +199,6 @@ let AddRole = async () => {
           }
       }
 
-      console.log(departmentId);
-
     const query ="INSERT INTO role SET ?";
     let result = await connection.query(query,
       {
@@ -210,7 +208,7 @@ let AddRole = async () => {
       });
 
     console.log("New role added successfully");
-    ViewAllRoles();
+    viewAllRoles();
     } catch (err) {
       console.log(err);
       track();
@@ -218,6 +216,197 @@ let AddRole = async () => {
 }
 
 //Function to add empolyee
+let addEmployee = async () => {
+  try {
+  var roleList = await connection.query ("SELECT * FROM role");
+
+  var empQuery = "SELECT emp.id, CONCAT(emp.first_name, ', ',  emp.last_name) as empname, role_id";
+      empQuery +=" FROM employee AS emp";
+      empQuery += " INNER JOIN role AS r";
+      empQuery +=" ON emp.role_id = r.id";
+  
+  var empList = await connection.query (empQuery);
+  
+  var answer = await inquirer.prompt([
+    {
+      name: "role",
+      type: "rawlist",
+      choices: () =>{
+        var choiceArray = [];
+        for (var i = 0; i < roleList.length; i++) {
+          choiceArray.push(roleList[i].title);
+        }
+        return choiceArray;
+      },
+      message: "What\'s the employee \'s role?"
+    },
+    {
+      name: "first_name",
+      type: "input",
+      message: "What\'s the employee\'s first name?"
+    },
+    {
+      name: "last_name",
+      type: "input",
+      message: "What\'s the employee\'s last name?"
+    },
+    {
+      name: "manager",
+      type: "rawlist",
+      choices: () =>{
+        var choiceEmp = [];
+        for (var i = 0; i < empList.length; i++) {
+          choiceEmp.push(empList[i].empname);
+        }
+        choiceEmp.unshift('n/a');
+        return choiceEmp;
+      },
+      message: "What\'s the employee\'s manager name?"
+    }
+  ]);
+
+   // get the role Id
+   var roleId;
+   for (var i = 0; i < roleList.length; i++) {
+       if (roleList[i].title === answer.role) {
+            roleId = roleList[i].id;
+       }
+   }
+
+  // get the manager Id
+    var managerId = null;
+    for (var i = 0; i < empList.length; i++) {
+        if (empList[i].empname === answer.manager) {
+          managerId = empList[i].id;
+        }   
+    }
+
+    //
+    const query ="INSERT INTO employee SET ?";
+    let result = await connection.query(query,
+      {
+        first_name: answer.first_name,
+        last_name: answer.last_name,
+        role_id: roleId,
+        manager_id: managerId 
+      });
+    
+  console.log("New employee added successfully!");
+  viewAllEmployees();
+
+}catch (err) {
+  console.log(err);
+  track();
+}
+}
+
+let updateEmployeeRole = async() => {
+  try{
+    var roleList = await connection.query ("SELECT * FROM role");
+    var answer = await inquirer.prompt([
+      {
+        name: "role",
+        type: "rawlist",
+        choices: () =>{
+          var choiceArray = [];
+          for (var i = 0; i < roleList.length; i++) {
+            choiceArray.push(roleList[i].title);
+          }
+          return choiceArray;
+        },
+        message: "Select the role you would like to update:"
+      },
+      {
+        type: 'list',
+        name: 'column',
+        message: 'Select the column to update:',
+        choices: ['title', 'salary', 'department_id']
+    }
+    ])
+
+       // get the role Id
+   var roleId;
+   for (var i = 0; i < roleList.length; i++) {
+       if (roleList[i].title === answer.role) {
+            roleId = roleList[i].id;
+       }
+   }
+
+   var newValquest = [{
+      name: "value",
+      type: "input",
+      message: "What\'s the new value?"
+    }];
+
+    switch (answer.column) {
+      case "title":
+        var newValue = await inquirer.prompt(newValquest);
+        query = "UPDATE role SET "+ answer.column + "=" +"'" + newValue.value + "'" + " WHERE id=" +roleId;
+        connection.query(query);
+        //updateRole(roleId, answer.column, newValue.value);
+        console.log("Update successful!");
+        break;
+
+      case "salary":
+        var newValue = await inquirer.prompt(newValquest);
+        query = "UPDATE role SET "+ answer.column + "=" + newValue.value + " WHERE id=" + roleId;
+        connection.query(query);
+        console.log("Update successful!");
+        break;
+
+      case "department_id":
+        var departmentList = await connection.query ("SELECT * FROM department");
+        var newDept = await inquirer.prompt([
+            {
+              name: "department",
+              type: "rawlist",
+              choices: () =>{
+                var choicedept = [];
+                for (var i = 0; i < departmentList.length; i++) {
+                  choicedept.push(departmentList[i].name);
+                }
+                return choicedept;
+              },
+              message: "Select the new department for the role:"
+            }
+          ]);
+
+        var departmentId;
+        for (var i = 0; i < departmentList.length; i++) {
+            if (departmentList[i].name === newDept.department) {
+              departmentId = departmentList[i].id;
+            }
+        }
+
+        query = "UPDATE role SET "+ answer.column + "=" +"'" + departmentId + "'" + " WHERE id=" +roleId;
+        connection.query(query);
+        console.log("Update successful!");
+          break;
+
+      case "Quit":
+          console.log("Exiting!")
+          connection.end();
+          break;
+        default:
+          console.log('No option was selected exiting..');
+          connection.end();
+    }
+    viewAllRoles();
+  }catch (err) {
+    console.log(err);
+    track();
+}
+}
+
+// let updateRole = (roleId, col, newVal) =>{
+//   query = "UPDATE role SET "+ col + "=" +"'" + newVal + "'" + " WHERE id=" +roleId;
+//   let result = await connection.query(query);
+  
+// console.log("New employee added successfully!");
+// ViewAllEmployees();
+
+// };
+
 
 
 track();
