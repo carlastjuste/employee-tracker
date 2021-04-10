@@ -142,7 +142,7 @@ let ViewAllRoles = async () => {
 //function to add employee
  AddDepartment = async () => {
   try {
-    var department = await inquirer.prompt([{
+    let department = await inquirer.prompt([{
         name: "name",
         type: "input",
         message: "What is the name of the department you would like to add?"
@@ -154,7 +154,6 @@ let ViewAllRoles = async () => {
 
     console.log("New Department added successfully");
       ViewAllDepartments();
-      track();
         }catch (err) {
           console.log(err);
           track();
@@ -165,10 +164,9 @@ let ViewAllRoles = async () => {
 //function to add role
 let AddRole = async () => {
   try {
-  let departmentList = await connection.query ("SELECT * FROM department");
+  var departmentList = await connection.query ("SELECT * FROM department");
 
-  let answer = await inquirer
-      .prompt([
+  var answer = await inquirer.prompt([
         {
           name: "department",
           type: "rawlist",
@@ -185,30 +183,34 @@ let AddRole = async () => {
           name: "title",
           type: "input",
           message: "What is the title of the role?",
-        },{
+        },
+        {
           name: "salary",
           type: "input",
           message: "What is the salary for the role?"
         }
       ]);
 
-      let departmentId =  await connection.query ("SELECT * FROM department where ?", answer.department);
+      // get the id of the chosen department
+      var departmentId;
+      for (var i = 0; i < departmentList.length; i++) {
+          if (departmentList[i].name === answer.department) {
+            departmentId = departmentList[i].id;
+          }
+      }
 
       console.log(departmentId);
-
-    
 
     const query ="INSERT INTO role SET ?";
     let result = await connection.query(query,
       {
       title: answer.title,
       salary: answer.salary,
-      department_id: departmentId[0]
+      department_id: departmentId
       });
 
     console.log("New role added successfully");
     ViewAllRoles();
-    track();
     } catch (err) {
       console.log(err);
       track();
@@ -216,9 +218,6 @@ let AddRole = async () => {
 }
 
 //Function to add empolyee
-
-
-
 
 
 track();
