@@ -33,7 +33,7 @@ connection.query = util.promisify(connection.query);
           type: "list",
           message: "What feature would you like to use?",
           choices: ["View All Employees" , "View All Departments","View All Roles"
-                    ,"Add Employee", "Add Role", "Add department"
+                    ,"Add Employee", "Add Role", "Add Department"
                     ,"Update Employee Role"
                     ,"Quit"
                     ]
@@ -80,6 +80,7 @@ connection.query = util.promisify(connection.query);
 
 //Function to view list of employees
 let ViewAllEmployees = async () => {
+  try{
   let query = "SELECT emp.id , emp.first_name , emp.last_name , title , NAME as department , salary , CONCAT(m.first_name ,' ', m.last_name) as manager";
       query += " FROM employee emp LEFT JOIN  ROLE r ON emp.role_id = r.id";
       query += " LEFT JOIN  department d ON d.id = r.department_id";
@@ -92,11 +93,17 @@ let ViewAllEmployees = async () => {
       }
       console.table(['Id', 'First Name', 'Last Name', 'Title', 'Department', 'Salary',  'Manager'], arr);
       track();
+  }catch (err) {
+    console.log(err);
+    track();
+}
+
 
 }
 
 // Function to view list of departments
 let ViewAllDepartments = async () => {
+  try{
   const query = "SELECT id, name FROM department limit 500";
 
   let departments = await connection.query(query);
@@ -106,10 +113,16 @@ let ViewAllDepartments = async () => {
       }
       console.table(['id', 'name'], arr);
       track();
+    }catch (err) {
+      console.log(err);
+      track();
+  }
+
 }
 
 //Function to view list of roles
 let ViewAllRoles = async () => {
+  try{
   let query = "SELECT r.id, title, salary, NAME AS department";
       query += " FROM ROLE r INNER JOIN department d ON d.id = r.department_id";
   
@@ -120,7 +133,89 @@ let ViewAllRoles = async () => {
       }
       console.table(['id', 'title', 'salary', 'department'], arr);
       track();
+  }catch (err) {
+    console.log(err);
+    track();
 }
+}
+
+//function to add employee
+ AddDepartment = async () => {
+  try {
+    var department = await inquirer.prompt([{
+        name: "name",
+        type: "input",
+        message: "What is the name of the department you would like to add?"
+      }
+    ]);
+
+    const query = "INSERT INTO department SET ?";
+    var result = await connection.query(query, {name: department.name});
+
+    console.log("New Department added successfully");
+      ViewAllDepartments();
+      track();
+        }catch (err) {
+          console.log(err);
+          track();
+      }  
+}
+
+
+//function to add role
+let AddRole = async () => {
+  try {
+  let departmentList = await connection.query ("SELECT * FROM department");
+
+  let answer = await inquirer
+      .prompt([
+        {
+          name: "department",
+          type: "rawlist",
+          choices: () =>{
+            var choiceArray = [];
+            for (var i = 0; i < departmentList.length; i++) {
+              choiceArray.push(departmentList[i].name);
+            }
+            return choiceArray;
+          },
+          message: "What is the department name for the role?",
+        },
+        {
+          name: "title",
+          type: "input",
+          message: "What is the title of the role?",
+        },{
+          name: "salary",
+          type: "input",
+          message: "What is the salary for the role?"
+        }
+      ]);
+
+      let departmentId =  await connection.query ("SELECT * FROM department where ?", answer.department);
+
+      console.log(departmentId);
+
+    
+
+    const query ="INSERT INTO role SET ?";
+    let result = await connection.query(query,
+      {
+      title: answer.title,
+      salary: answer.salary,
+      department_id: departmentId[0]
+      });
+
+    console.log("New role added successfully");
+    ViewAllRoles();
+    track();
+    } catch (err) {
+      console.log(err);
+      track();
+  }
+}
+
+//Function to add empolyee
 
 
 
