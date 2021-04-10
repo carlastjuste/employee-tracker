@@ -300,6 +300,7 @@ let addEmployee = async () => {
 }
 }
 
+//function to update update employee role
 let updateEmployeeRole = async() => {
   try{
     var roleList = await connection.query ("SELECT * FROM role");
@@ -397,16 +398,5 @@ let updateEmployeeRole = async() => {
     track();
 }
 }
-
-// let updateRole = (roleId, col, newVal) =>{
-//   query = "UPDATE role SET "+ col + "=" +"'" + newVal + "'" + " WHERE id=" +roleId;
-//   let result = await connection.query(query);
-  
-// console.log("New employee added successfully!");
-// ViewAllEmployees();
-
-// };
-
-
 
 track();
