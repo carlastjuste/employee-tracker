@@ -1,6 +1,7 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 const cTable = require('console.table');
+var util = require("util");
 
 
 console.log("---------------EMPLOYEE TRACKER APP---------------");
@@ -15,15 +16,15 @@ const connection = mysql.createConnection({
     database: "employee_tracker"
   });
   
-
   connection.connect(err => {
       if (err) throw err;
     console.log("Connected to employee_tracker on MySQL !");
   });
 
+  // using built-in utils method to have connection.query() return a promise
+connection.query = util.promisify(connection.query);
 
-  //First prompt with choice option
-
+  //Prompt
   const track = async () => {
       const prompts = [
       
@@ -78,49 +79,47 @@ const connection = mysql.createConnection({
   //------------------------------------------------------//
 
 //Function to view list of employees
-let ViewAllEmployees = () => {
+let ViewAllEmployees = async () => {
   let query = "SELECT emp.id , emp.first_name , emp.last_name , title , NAME as department , salary , CONCAT(m.first_name ,' ', m.last_name) as manager";
       query += " FROM employee emp LEFT JOIN  ROLE r ON emp.role_id = r.id";
       query += " LEFT JOIN  department d ON d.id = r.department_id";
       query += " LEFT JOIN employee m  ON m.id = emp.manager_id";
-      
-  connection.query(query, function(err, res) {
+
+  let employees = await connection.query(query);
       var arr = [];
-      for (var i = 0; i < res.length; i++) {
-          arr.push([res[i].id, res[i].first_name, res[i].last_name, res[i].title, res[i].department, res[i].salary , res[i].manager]);
+      for (var i = 0; i < employees.length; i++) {
+          arr.push([employees[i].id, employees[i].first_name, employees[i].last_name, employees[i].title, employees[i].department, employees[i].salary , employees[i].manager]);
       }
       console.table(['Id', 'First Name', 'Last Name', 'Title', 'Department', 'Salary',  'Manager'], arr);
       track();
-  });
+
 }
 
 // Function to view list of departments
-let ViewAllDepartments = () => {
+let ViewAllDepartments = async () => {
   const query = "SELECT id, name FROM department limit 500";
-  connection.query(query, (err, res) => {
-      let arr = [];
-      for (var i = 0; i < res.length; i++) {
-          arr.push([res[i].id, res[i].name]);
+
+  let departments = await connection.query(query);
+  let arr = [];
+      for (var i = 0; i < departments.length; i++) {
+          arr.push([departments[i].id, departments[i].name]);
       }
       console.table(['id', 'name'], arr);
       track();
-  });
 }
 
 //Function to view list of roles
-let ViewAllRoles = () => {
+let ViewAllRoles = async () => {
   let query = "SELECT r.id, title, salary, NAME AS department";
       query += " FROM ROLE r INNER JOIN department d ON d.id = r.department_id";
   
-  connection.query(query, (err, res) => {
-
+  let roles = await connection.query(query);
       var arr = [];
-      for (var i = 0; i < res.length; i++) {
-          arr.push([res[i].id, res[i].title, res[i].salary, res[i].department]);
+      for (var i = 0; i < roles.length; i++) {
+          arr.push([roles[i].id, roles[i].title, roles[i].salary, roles[i].department]);
       }
       console.table(['id', 'title', 'salary', 'department'], arr);
       track();
-  });
 }
 
 
