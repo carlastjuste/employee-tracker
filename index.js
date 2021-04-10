@@ -22,28 +22,55 @@ const connection = mysql.createConnection({
   });
 
 
+
   const prompts = [
+  
     {
-        type:'input',
-        name:'name',
-        message:'What\'s the team member\'s name?'
-       
-    },
-    {
-        type: 'input',
-        name:'id',
-        message: 'What\'s the team member\'s id?'
-    },
-    {
-        type: 'input',
-        name:'email',
-        message: 'What\'s the team member\'s email address?'
-    },
-    {
-        type: 'list',
-        name: 'role',
-        message: 'What\'s the team member\'s role?',
-        choices: ['Manager', 'Engineer', 'Intern']
+      name: "module",
+      type: "list",
+      message: "What feature would you like to use?",
+      choices: ["View All Employees" , "Add Employee", "Update Employee Role"
+                ,"View All Roles", "Add Role" 
+                , "View All Departments", "Add department"
+                ,"Quit"
+                ]
     }
   ];
 
+
+  inquirer.prompt(prompts)
+    .then(answer => {
+      switch (answer.module) {
+        case "View All Employees":
+          ViewAllEmployees();
+          break;
+       case "Add Employee":
+          AddEmployee();
+          break;
+       case "Update Employee Role":
+          SearchEmployeeById("UpdateRole");
+          break;
+      case "View All Roles":
+          ViewAllRoles();
+          break;
+      case "Add Role":
+          AddRole();
+          break;
+      case "View All Departments":
+          ViewAllDepartments();
+          break;
+      case "Add Department":
+           AddDepartment();
+           break;
+      case "Delete Department":
+          SearchDepartmentById("Delete");
+            break;
+      case "Quit":
+          console.log("Exiting!")
+          connection.end();
+          break;
+        default:
+          console.log('No option was selected exiting');
+          connection.end();
+    }
+  });
